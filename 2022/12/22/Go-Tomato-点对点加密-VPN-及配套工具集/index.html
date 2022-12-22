@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Go Tomato 点对点加密 VPN 及配套工具集 | VHQR&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="前言最近又重写了 tomato，本节之后的内容是这个新轮子的 readme，下面写点感想。 tomato_archive 保存了历代 tomato 的源码，基本上使用 c&#x2F;c++&#x2F;python 实现。tomato 项目最初的目的是写个类似于 trojan 的基于 TLS 的加密代理，后来功能不断丰富，要实现兼容 HTTP 代理、代理规则匹配等功能，并且添加端口转发（TCP&amp;#x">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go Tomato 点对点加密 VPN 及配套工具集">
+<meta property="og:url" content="https://vhqr0.github.io/2022/12/22/Go-Tomato-%E7%82%B9%E5%AF%B9%E7%82%B9%E5%8A%A0%E5%AF%86-VPN-%E5%8F%8A%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E9%9B%86/index.html">
+<meta property="og:site_name" content="VHQR&#39;s Blog">
+<meta property="og:description" content="前言最近又重写了 tomato，本节之后的内容是这个新轮子的 readme，下面写点感想。 tomato_archive 保存了历代 tomato 的源码，基本上使用 c&#x2F;c++&#x2F;python 实现。tomato 项目最初的目的是写个类似于 trojan 的基于 TLS 的加密代理，后来功能不断丰富，要实现兼容 HTTP 代理、代理规则匹配等功能，并且添加端口转发（TCP&amp;#x">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-12-21T17:03:51.000Z">
+<meta property="article:modified_time" content="2022-12-22T06:44:42.837Z">
+<meta property="article:author" content="vhqr0@github">
+<meta property="article:tag" content="Network">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="VHQR's Blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">VHQR&#39;s Blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS 订阅"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://vhqr0.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Go-Tomato-点对点加密-VPN-及配套工具集" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/12/22/Go-Tomato-%E7%82%B9%E5%AF%B9%E7%82%B9%E5%8A%A0%E5%AF%86-VPN-%E5%8F%8A%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E9%9B%86/" class="article-date">
+  <time class="dt-published" datetime="2022-12-21T17:03:51.000Z" itemprop="datePublished">2022-12-22</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Go Tomato 点对点加密 VPN 及配套工具集
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最近又重写了 tomato，本节之后的内容是这个新轮子的 readme，下面写点感想。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/vhqr0/tomato_archive">tomato_archive</a> 保存了历代 tomato 的源码，基本上使用 c&#x2F;c++&#x2F;python 实现。tomato 项目最初的目的是写个类似于 trojan 的基于 TLS 的加密代理，后来功能不断丰富，要实现兼容 HTTP 代理、代理规则匹配等功能，并且添加端口转发（TCP&#x2F;TLS 转换、UDP）和内网穿透（TCP、UDP）等工具。虽然这些功能已经基本实现，但是愈发感觉整个项目像个屎山而不断重构。</p>
+<p>从实现原理上看，经过各种尝试后总结出 qtmd 加密和内网穿透，这些功能应该在网络层而非传输层实现。在传输层要考虑到加密&#x2F;非加密转换、TCP&#x2F;UDP 协议、是否要穿透内网等，排列组合一下就要实现多个工具，尤其是内网穿透要考虑到加密&#x2F;非加密转换、认证和异常重启等问题，产生了大量重复工作和 BUG。而在网络层实现加密和内网穿透就变得十分简单，基于 tun 的 VPN 无连接无状态不容易出错，而且在传输层只需要实现支持规则转发的代理，如果需要暴露内网服务就再加上 TCP 或 UDP 转发，是最优雅的实现方式。</p>
+<p>从实现工具上看，编程语言从c、c++ 到 python，编程方式从基本的套接字 API 和多线程、异步回调到协程。协程写起来更像进程、线程，流程清晰明确，而异步回调的一个流程则分布在状态机中，更加复杂，因此前一个版本的 tomato 已完全转向协程（asio、asyncio）。</p>
+<p>然后是这一版本的开发历程。前一版本意识到两个问题：应该将加密和内网穿透在网络层实现（VPN），和应该使用日志库。</p>
+<p>为什么不用 c++？事实上我一开始就选择了熟悉的 asio，日志库选择 glog。glog 还是不错的，我很快写完了配置解析，准备开始写服务的时候问题就出来了：clangd 补全协程代码需要 clang 支持协程 &#x3D;&gt; clang 协程依赖 libc++ &#x3D;&gt; libc++ 依赖特定版本的 libunwind &#x3D;&gt; 与 glog 依赖默认版本的 libunwind 冲突。简而言之就是 debian 的 libc++ 与所有依赖默认版本的 libunwind 的包冲突，去网上搜索一下能看到很多人吐槽这个问题。总之，asio 是很优秀的网络库，但是仅有网络库是不够的：</p>
+<ol>
+<li>工具链对 c++20 协程的支持还不够成熟：例如 clang 和 gcc 的不一致性问题、libc++ 依赖性问题等。</li>
+<li>缺乏支持协程的同步机制：例如锁、队列，asio 协程仅可以异步等待 IO、超时和信号。</li>
+<li>缺乏流连接和数据报连接的统一抽象机制：例如一个流连接支持 send、recv 和 close，的底层可以是 TCP 或 TLS。</li>
+<li>缺乏实现网络服务的基本库：例如日志库轮子一大堆，但要么太复杂（boost），要么有依赖问题（glog），而且 c++ 的 IO 流实在是丑陋不堪。</li>
+</ol>
+<p>用 c++ 写一个简单的网络服务，大部分时间却花费在工具链、日志等与网络服务本身无关的地方。</p>
+<p>为什么不用 python？asyncio 虽然有同步机制和流连接（TCP 和 TLS），但是没有完整封装异步 IO 调用，例如数据报套接字 API 和文件 IO。我在放弃用 c++ 实现后也尝试过用 python 实现，但是这次连配置解析都写不下去，深感 python 只适合写脚本。</p>
+<p>最终，我现学了 go，然后只用了两天就实现了全部功能。go 的优点：</p>
+<ol>
+<li>简单易学，表达能力不弱于 python，而且 ls 更稳定，只是不能像 python 那样交互式开发。</li>
+<li>协程、同步机制和 IO 调用封装是完备的，并且实现了流连接、数据报连接的统一抽象机制。</li>
+<li>标准库简单易用，网络方面比 python 标准库更 battery included，尤其是密码库。</li>
+</ol>
+<p>总而言之，go 非常适合开发网络服务，改用 go 后神清气爽，难怪同类型的 VPN 或代理都用 go 实现。</p>
+<p>最后是这个项目的计划，目前能想到的就是基于 netfilter_queue 的 UDP 转 TCP 连接，用 QoS 更高的 TCP 连接代替 UDP 连接，可能只有实现了这个功能，tomato 才能取代常见的加密代理。</p>
+<h1 id="tomato"><a href="#tomato" class="headerlink" title="tomato"></a>tomato</h1><p>本项目包含三个独立的可执行文件：</p>
+<ol>
+<li><code>vpn</code> 是点对点加密 VPN 实现，用于建立隐秘的网络层链路。（Linux）</li>
+<li><code>ping</code> 是支持 IPv4&#x2F;IPv6 的 Ping 实现，用于 <code>vpn</code> 的心跳检测。（Unix）</li>
+<li><code>proxy</code> 是支持规则的 HTTP 代理实现，配合 <code>vpn</code> 可取代常见的加密代理工具。</li>
+</ol>
+<h2 id="install"><a href="#install" class="headerlink" title="install"></a>install</h2><ol>
+<li>安装 <code>go</code> 和依赖库 <code>golang.org/x/sys</code> （<code>go get</code>）。</li>
+<li>在根目录执行 <code>make</code> ，三个可执行文件将生成到 <code>bin</code> 目录。</li>
+<li>（Optional）<code>scripts/dlmerge.py</code> 将 <a target="_blank" rel="noopener" href="https://github.com/v2fly/domain-list-community">domain-list</a> 转化为 <code>proxy</code> 的规则文件。</li>
+</ol>
+<h1 id="vpn"><a href="#vpn" class="headerlink" title="vpn"></a>vpn</h1><p><code>vpn</code> 是基于 Linux <code>tun/tap</code> 机制的类似于 <code>wireguard</code> 的点对点加密 VPN 实现。<br>VPN 两端节点是对等的，在各自的角度分别称为 local 和 peer，各自使用独立的密码加密网络层的报文。</p>
+<p>PS. local 和 peer 是对等的，不能基于身份从一个密码中生成不同的密钥，因此 local 和 peer 应各自使用独立的密码。</p>
+<h2 id="basic"><a href="#basic" class="headerlink" title="basic"></a>basic</h2><p>以主机 A（192.168.8.130）连接主机 B（192.168.8.131）为例：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 新建名为 tun0 的 tun 类型设备</span></span><br><span class="line">ip tuntap add dev tun0 mode tun</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启 tun0</span></span><br><span class="line">ip l <span class="built_in">set</span> tun0 up</span><br><span class="line"></span><br><span class="line"><span class="comment"># （优化）配置 tun0 MTU</span></span><br><span class="line">ip l <span class="built_in">set</span> tun0 mtu 1400</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置 tun0 IPv4 地址</span></span><br><span class="line">ip a add 10.0.1.1/30 dev tun0</span><br><span class="line"></span><br><span class="line"><span class="comment"># （优化）关闭 tun0 IPv6 协议栈</span></span><br><span class="line"><span class="built_in">echo</span> 1 &gt; /proc/sys/net/ipv6/conf/tunl/disable_ipv6</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行 vpn</span></span><br><span class="line"><span class="comment"># la: local address</span></span><br><span class="line"><span class="comment"># lp: local password</span></span><br><span class="line"><span class="comment"># pa: peer address</span></span><br><span class="line"><span class="comment"># pp: peer password</span></span><br><span class="line"><span class="comment"># v:  verbose</span></span><br><span class="line">vpn -la :5000 -lp pwd1 -pa 192.168.8.131:5000 -pp pwd2 -v</span><br></pre></td></tr></table></figure>
+
+<p>主机 B 也使用相同的方法连接主机 A，这样就建立了点对点加密网络 <code>10.0.1.1/30 &lt;=&gt; 10.0.1.2/30</code>。</p>
+<p>PS. 通常将点对点网络的前缀长度配置为 &#x2F;30，包含 4 个地址 0、1、2、3，分别表示网络本身、两端节点和广播地址。</p>
+<p>PS. 报头长度：’((IPv4 . 20) (IPv6 . 40) (UDP . 8) (<code>vpn</code> . 44))，在使用时最好酌情配置 MTU，例如 <code>1500 - 40 - 8 - 44 = 1408</code>。</p>
+<p>PS. IPv6 在点对点链路上相对 IPv4 没有任何优势：路由优化没有效果、报头更长、频繁发送无用报文等等，在使用时最好关闭 IPv6 协议栈。</p>
+<h2 id="gateway"><a href="#gateway" class="headerlink" title="gateway"></a>gateway</h2><p>如果想要将主机 A 作为主机 B 的网关，两个主机都需要额外的配置。</p>
+<p>主机 A 的额外配置：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 开启 IPv4 路由转发</span></span><br><span class="line"><span class="built_in">echo</span> 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置 NAT</span></span><br><span class="line">iptables -t nat -A POSTROUTING -s 10.0.1.0/30 -o ens33 -j MASQUERADE</span><br></pre></td></tr></table></figure>
+
+<p>PS. <code>iptables</code> 的 <code>MASQUERADE</code> 即根据出口接口的地址自动配置 NAT。</p>
+<p>主机 B 的额外配置：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加主机 A 路由规则</span></span><br><span class="line">ip r add 192.168.8.130 via x.x.x.x dev ens33</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置网关</span></span><br><span class="line">ip r add default via 10.0.1.1/30 dev tun0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置 DNS</span></span><br><span class="line">vim /etc/resolv.conf</span><br></pre></td></tr></table></figure>
+
+<p>PS. 为确保发送给主机 A（192.168.8.130）的 UDP 报文可以正常转发，应在改变网关前添加正确的路由规则。</p>
+<p>PS. 主机 B 应配置正确的 DNS 服务器地址，通常与主机 A 的 DNS 服务器地址相同。</p>
+<h2 id="dynamic-update"><a href="#dynamic-update" class="headerlink" title="dynamic update"></a>dynamic update</h2><p>VPN 两端节点不必都预先知道对端地址，其中一端可以等收到对端报文时动态更新地址，称为动态更新模式。</p>
+<p>动态更新模式适用于无法固定 peer 的地址的场景，例如 NAT 地址转换或切换网络、设备。</p>
+<p>继续前面的例子，如果主机 A 无法固定主机 B 的地址，<code>vpn</code> 的参数应做出如下改变：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vpn -la :5000 -lp pwd1 -d -pp pwd2 -v</span><br></pre></td></tr></table></figure>
+
+<p>注意到 <code>-pa 192.168.8.131:5000</code> 变为 <code>-d</code>。</p>
+<p>更进一步，在一个具有公网地址的节点上通过动态更新模式建立两个连接并开启路由转发可以连接两个内网节点。</p>
+<p>PS. 在动态更新模式下，如果未收到第一个报文或长时间（默认 60s）未收到报文，会造成连接丢失。</p>
+<h2 id="protocol"><a href="#protocol" class="headerlink" title="protocol"></a>protocol</h2><p>TODO</p>
+<h1 id="ping"><a href="#ping" class="headerlink" title="ping"></a>ping</h1><p><code>ping</code> 和众所周知的同名命令功能一致：周期性（默认 30s）Ping 目标主机，并使用 <code>go</code> 的 <code>log</code> 输出结果。</p>
+<p>在这里提供 <code>ping</code> 的目的是为使用动态更新模式的 <code>vpn</code> 创建的连接提供心跳检测。</p>
+<p>继续前面的例子，如果主机 B 想要保证对端不会丢失连接：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ping -a 10.0.1.1</span><br></pre></td></tr></table></figure>
+
+<h1 id="proxy"><a href="#proxy" class="headerlink" title="proxy"></a>proxy</h1><p><code>proxy</code> 是支持规则的 HTTP 代理实现，与 <code>vpn</code> 配合可以取代 <code>v2ray</code>、<code>trojan</code> 等加密代理工具。</p>
+<p>与通过 <code>vpn</code> 将对端当作网关相比，我更推荐在连接两端部署 <code>proxy</code>，配置规则按需访问对端：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配置环境变量（Unix）</span></span><br><span class="line"><span class="built_in">export</span> ALL_PROXY=http://localhost:1080</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行 proxy</span></span><br><span class="line"><span class="comment"># a：local address</span></span><br><span class="line"><span class="comment"># f：forward address</span></span><br><span class="line"><span class="comment"># r：rule file</span></span><br><span class="line">proxy -a :1080 -f 10.0.1.1:1080 -r rule.txt -v</span><br></pre></td></tr></table></figure>
+
+<p>这样，支持代理协议的应用，例如浏览器和包管理器等，将使用本地 <code>proxy</code>，后者根据规则决定如何处理请求，例如将请求转发给对端 <code>proxy</code>。</p>
+<h2 id="rule"><a href="#rule" class="headerlink" title="rule"></a>rule</h2><p><code>proxy</code> 对于一个请求有三个处理方式：</p>
+<ol>
+<li><code>block</code>：丢弃请求。</li>
+<li><code>direct</code>：在本地处理请求。</li>
+<li><code>forward</code>：将请求转发给对端，如果未设置对端则按照 <code>direct</code> 处理。</li>
+</ol>
+<p>规则文件的格式如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># comment</span><br><span class="line"></span><br><span class="line">block	ads.baidu.com</span><br><span class="line">direct	baidu.com</span><br><span class="line">forward	github.com</span><br></pre></td></tr></table></figure>
+
+<p><code>proxy</code> 将忽略所有注释和空行，将所有规则按照 “direction	domain”（注意中间为 TAB） 解析。<br>如果一个域名出现多次，则以第一次为准，因此用户可以编辑文件头来覆盖后面的规则。</p>
+<p>规则匹配将逐步匹配根域名直至匹配成功，例如匹配域名 <a target="_blank" rel="noopener" href="http://www.baidu.com/">www.baidu.com</a> 时将依次匹配 <a target="_blank" rel="noopener" href="http://www.baidu.com、baidu.com/">www.baidu.com、baidu.com</a> 和 com。<br>命令行参数 <code>-d DIRECTION</code> 决定默认的处理方式，默认为 <code>direct</code>。</p>
+<p>PS. <code>proxy</code> 即使不用来做分流，也可以用来做广告过滤器。</p>
+<p>PS. <code>script/dlmerge.py</code> 将 <a target="_blank" rel="noopener" href="https://github.com/v2fly/domain-list-community">domain-list</a> 转化为 <code>proxy</code> 的规则文件可能满足你的需求。</p>
+<h1 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h1><ol>
+<li><code>udp2tcp</code>：基于 Linux 的 <code>netfilter_queue</code> 实现 UDP 连接转 TCP 连接，解决 UDP 和 TCP 的 QoS 不对等的问题。</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://vhqr0.github.io/2022/12/22/Go-Tomato-%E7%82%B9%E5%AF%B9%E7%82%B9%E5%8A%A0%E5%AF%86-VPN-%E5%8F%8A%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E9%9B%86/" data-id="clbypvexq0000a0vl8itw81pk" data-title="Go Tomato 点对点加密 VPN 及配套工具集" class="article-share-link">分享</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Network/" rel="tag">Network</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2022/11/03/Django-%E5%A4%B4%E5%83%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">Django: 头像数据库</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web/" rel="tag">Web</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Network/" style="font-size: 10px;">Network</a> <a href="/tags/Web/" style="font-size: 20px;">Web</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">十月 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/12/22/Go-Tomato-%E7%82%B9%E5%AF%B9%E7%82%B9%E5%8A%A0%E5%AF%86-VPN-%E5%8F%8A%E9%85%8D%E5%A5%97%E5%B7%A5%E5%85%B7%E9%9B%86/">Go Tomato 点对点加密 VPN 及配套工具集</a>
+          </li>
+        
+          <li>
+            <a href="/2022/11/03/Django-%E5%A4%B4%E5%83%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">Django: 头像数据库</a>
+          </li>
+        
+          <li>
+            <a href="/2022/10/25/Python-%E7%BC%96%E5%86%99-Web-Mock-%E6%9C%8D%E5%8A%A1%E5%99%A8/">Python 编写 Mock 服务器</a>
+          </li>
+        
+          <li>
+            <a href="/2022/10/24/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 vhqr0@github<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
